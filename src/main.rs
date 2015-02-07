@@ -1,6 +1,8 @@
+#![feature(io,path,core)]
+
 extern crate crypto;
 
-use std::old_io::{File, fs, FileType};
+use std::old_io::{File, fs};
 use std::old_io::fs::PathExtensions;
 use crypto::md5::Md5;
 use crypto::digest::Digest;
@@ -11,7 +13,7 @@ fn main() {
         Ok(results) => {
             for file_path in results {
                 if file_path.is_file() {
-                    hash_file(&file_path);
+                    println!("{}", hash_file(&file_path));
                 }
             }
         },
@@ -19,15 +21,17 @@ fn main() {
     }
 }
 
-fn hash_file(p: &Path) {
+fn hash_file(p: &Path) -> String {
     let mut md5 = Md5::new();
-    println!("{}", p.display());
     let contents = File::open(p).read_to_end();
     match contents {
         Ok(good) => {
             md5.input(&good);
-            println!("{}", md5.result_str());
+            let result = md5.result_str();
+            return result;
         },
-        Err(i) => println!("{}", i),
+        Err(i) => {
+            panic!(format!("{}", i));
+        }
     }
 }
