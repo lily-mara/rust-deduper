@@ -4,16 +4,23 @@ extern crate crypto;
 
 use std::old_io::{File, fs};
 use std::old_io::fs::PathExtensions;
+use std::collections::HashSet;
 use crypto::md5::Md5;
 use crypto::digest::Digest;
 
 fn main() {
+    let mut hashes = HashSet::new();
     let folder = fs::walk_dir(&Path::new("."));
     match folder {
         Ok(results) => {
             for file_path in results {
                 if file_path.is_file() {
-                    println!("{}", hash_file(&file_path));
+                    let hash = hash_file(&file_path);
+                    if hashes.contains(&hash) {
+                        println!("{}", file_path.display());
+                    } else {
+                        hashes.insert(hash);
+                    }
                 }
             }
         },
