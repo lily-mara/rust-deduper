@@ -6,3 +6,4 @@ authors = ["Nate Mara <natemara@gmail.com>"]
 
 [dependencies]
 rust-crypto = "*"
+getopts = "*"
