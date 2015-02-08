@@ -1,6 +1,7 @@
 #![feature(io,path,core,os)]
 
 extern crate crypto;
+extern crate getopts;
 
 use std::os;
 use std::old_io::{File, fs};
@@ -8,10 +9,36 @@ use std::old_io::fs::PathExtensions;
 use std::collections::HashSet;
 use crypto::md5::Md5;
 use crypto::digest::Digest;
+use getopts::Options;
 
 fn main() {
-    let args = os::args();
-    let folder = fs::walk_dir(&Path::new(&args[1]));
+    let args: Vec<String> = os::args();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optopt("d", "directory", "set folder to scan (required)", "DIRECTORY");
+    opts.optflag("r", "remove", "automatically delete the duplicate files");
+    opts.optflag("h", "help", "print this help menu");
+
+    let matches = match opts.parse(args.tail()) {
+        Ok(m) => m,
+        Err(f) => panic!(f.to_string()),
+    };
+
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
+    }
+
+    let directory = match matches.opt_str("d") {
+        Some(d) => d,
+        None => {
+            print_usage(&program, opts);
+            return;
+        },
+    };
+
+    let folder = fs::walk_dir(&Path::new(directory));
 
     let mut hashes = HashSet::new();
     let mut duplicates = HashSet::new();
@@ -36,9 +63,19 @@ fn main() {
     println!("{} duplicates found, {} files scanned", duplicates.len(), duplicates.len() + hashes.len() - 1);
 
     let mut out_file = File::create(&Path::new("duplicates")).unwrap();
+    let delete =  matches.opt_present("r");
+
     for dup in duplicates {
+        if delete {
+            fs::unlink(&dup);
+        }
         out_file.write_str(format!("{}\n", dup.display()).as_slice());
     }
+}
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} [options]", program);
+    print!("{}", opts.usage(brief.as_slice()));
 }
 
 fn hash_file(p: &Path) -> String {
