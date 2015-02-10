@@ -40,8 +40,8 @@ fn main() {
 
     let folder = fs::walk_dir(&Path::new(directory));
 
-    let mut hashes = HashSet::new();
-    let mut duplicates = HashSet::new();
+    let mut hashes = Box::new(HashSet::new());
+    let mut duplicates = Box::new(HashSet::new());
 
     match folder {
         Ok(results) => {
@@ -65,7 +65,7 @@ fn main() {
     let mut out_file = File::create(&Path::new("duplicates")).unwrap();
     let delete =  matches.opt_present("r");
 
-    for dup in duplicates {
+    for dup in duplicates.iter() {
         if delete {
             fs::unlink(&dup);
         }
